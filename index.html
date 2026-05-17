@@ -178,7 +178,9 @@
       display: grid;
       gap: 7px;
       min-height: 0;
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 1px;
     }
 
     .month-btn {
@@ -209,15 +211,15 @@
 
     .month-btn.is-active {
       background:
-        linear-gradient(180deg, rgba(239,239,239,0.22), rgba(166,204,191,0.18)),
-        linear-gradient(120deg, rgba(166,204,191,0.26), rgba(219,208,183,0.08));
-      border-color: rgba(239,239,239,0.62);
+        linear-gradient(180deg, rgba(239,239,239,0.16), rgba(166,204,191,0.12)),
+        linear-gradient(120deg, rgba(166,204,191,0.18), rgba(37,90,78,0.04));
+      border-color: rgba(239,239,239,0.78);
       color: #ffffff;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.24),
-        0 0 0 1px rgba(166,204,191,0.34),
-        0 14px 28px rgba(7,22,18,0.14);
-      transform: translateX(3px);
+        inset 0 1px 0 rgba(255,255,255,0.28),
+        inset 0 0 0 1px rgba(166,204,191,0.18),
+        0 0 0 1px rgba(166,204,191,0.28),
+        0 10px 24px rgba(7,22,18,0.1);
     }
 
     .month-btn.is-active .month-pill {
