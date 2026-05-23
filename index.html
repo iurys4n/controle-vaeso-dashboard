@@ -720,6 +720,12 @@
       background: rgba(166,204,191,0.16);
       font-weight: 500;
       cursor: pointer;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .day-picker:hover {
+      background: rgba(166,204,191,0.32);
+      box-shadow: inset 0 0 0 1px rgba(166,204,191,0.4);
     }
 
     .day-date-input {
@@ -1071,6 +1077,7 @@
               <span class="days-pill" id="monthDaysPill">0 dias</span>
             </div>
             <div class="panel-actions">
+              <button class="panel-tool" id="addDayBtn" type="button">+ Dia</button>
               <button class="panel-tool" id="pendingToggle" type="button">Pendentes</button>
               <button class="panel-tool" id="exportMonthBtn" type="button">Relatório</button>
               <div class="search-panel">
@@ -1429,6 +1436,7 @@
         render();
       });
       document.getElementById("exportMonthBtn").addEventListener("click", exportSelectedMonth);
+      document.getElementById("addDayBtn").addEventListener("click", addEntry);
     }
 
     function selectMonth(index) {
@@ -1518,6 +1526,7 @@
       }).join("");
       timeline.querySelectorAll(".day-date-input").forEach((input) => {
         input.addEventListener("change", handleEntryEdit);
+        input.addEventListener("click", handleDayPickerOpen);
       });
       timeline.querySelectorAll(".hour-step").forEach((button) => {
         button.addEventListener("click", handleHourStep);
@@ -1555,6 +1564,16 @@
       render();
     }
 
+    function handleDayPickerOpen(event) {
+      const input = event.currentTarget;
+      if (typeof input.showPicker !== "function") return;
+      try {
+        input.showPicker();
+      } catch (error) {
+        /* calendário já aberto ou bloqueado pelo navegador */
+      }
+    }
+
     function handleHourStep(event) {
       const button = event.currentTarget;
       const month = months[selectedIndex];
@@ -1565,6 +1584,25 @@
       recalculateAll();
       saveData();
       render();
+    }
+
+    function addEntry() {
+      const month = months[selectedIndex];
+      const monthNumber = MONTH_NUMBERS[month.name] || 1;
+      const totalDays = new Date(YEAR, monthNumber, 0).getDate();
+      const maxDay = month.entries.reduce((max, entry) => Math.max(max, Number(entry.dayNumber) || 0), 0);
+      const nextDay = month.entries.length ? Math.min(maxDay + 1, totalDays) : 1;
+      month.entries.push({ day: String(nextDay), dayNumber: nextDay, hours: 0, task: "", tags: [] });
+      recalculateAll();
+      saveData();
+      render();
+      const newIndex = month.entries.length - 1;
+      window.requestAnimationFrame(() => {
+        const input = document.querySelector(`.tag-input[data-index="${newIndex}"]`);
+        if (!input) return;
+        input.scrollIntoView({ block: "nearest" });
+        input.focus();
+      });
     }
 
     function isPendingEntry(entry) {
