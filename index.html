@@ -1060,9 +1060,6 @@
               <button class="panel-tool" id="addDayBtn" type="button">+ Dia</button>
               <button class="panel-tool" id="pendingToggle" type="button">Pendentes</button>
               <button class="panel-tool" id="exportMonthBtn" type="button">Relatório</button>
-              <button class="panel-tool" id="backupBtn" type="button">Backup</button>
-              <button class="panel-tool" id="restoreBtn" type="button">Restaurar</button>
-              <input id="restoreFile" type="file" accept="application/json,.json" hidden>
               <div class="search-panel">
                 <input class="entry-input" id="activitySearch" type="search" placeholder="Buscar">
               </div>
@@ -1081,7 +1078,8 @@
     const STORAGE_KEY = "hours-dashboard-vaeso-edits-v2";
     const MIGRATION_KEY = "hours-dashboard-vaeso-fill-4h-v1";
     const ZERO_ABSENCE_KEY = "hours-dashboard-vaeso-zero-absence-v1";
-    const CLOUD_ENDPOINT = "";
+    const CLOUD_ENDPOINT = "https://horas-backup.iury.workers.dev";
+    const CLOUD_STORE = "vaeso";
     const data = loadData();
     const months = data.months;
     const MONTH_NAMES = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
@@ -1208,47 +1206,6 @@
       queueCloudSave();
     }
 
-    function downloadBackup() {
-      const raw = localStorage.getItem(STORAGE_KEY) || JSON.stringify({
-        months: months.map((month) => ({ name: month.name, entries: month.entries })),
-      });
-      const blob = new Blob([raw], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const stamp = new Date().toISOString().slice(0, 10);
-      link.download = `backup-controle-vaeso-${stamp}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function handleRestoreFile(event) {
-      const file = event.target.files && event.target.files[0];
-      event.target.value = "";
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          if (!parsed || !Array.isArray(parsed.months)) {
-            window.alert("Arquivo de backup inválido.");
-            return;
-          }
-          const totalEntries = parsed.months.reduce((sum, m) => sum + (Array.isArray(m.entries) ? m.entries.length : 0), 0);
-          if (!window.confirm(`Restaurar este backup? Ele tem ${parsed.months.length} meses e ${totalEntries} lançamentos, e vai substituir o que está neste endereço.`)) {
-            return;
-          }
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ months: parsed.months }));
-          window.location.reload();
-        } catch (error) {
-          window.alert("Não foi possível ler o arquivo de backup.");
-        }
-      };
-      reader.readAsText(file);
-    }
-
     function serializeData() {
       recalculateAll();
       return {
@@ -1286,7 +1243,7 @@
 
     function saveCloudData() {
       if (!CLOUD_ENDPOINT) return;
-      const payload = JSON.stringify({ action: "write", data: serializeData() });
+      const payload = JSON.stringify({ action: "write", store: CLOUD_STORE, data: serializeData() });
       fetch(CLOUD_ENDPOINT, {
         method: "POST",
         mode: "no-cors",
@@ -1311,7 +1268,7 @@
           resolve(response && response.data ? response.data : response);
         };
 
-        script.src = `${CLOUD_ENDPOINT}?action=read&callback=${encodeURIComponent(callbackName)}&t=${Date.now()}`;
+        script.src = `${CLOUD_ENDPOINT}?action=read&store=${CLOUD_STORE}&callback=${encodeURIComponent(callbackName)}&t=${Date.now()}`;
         script.onerror = () => {
           cleanup();
           reject(new Error("Falha ao carregar dados online."));
@@ -1459,9 +1416,6 @@
         render();
       });
       document.getElementById("exportMonthBtn").addEventListener("click", exportSelectedMonth);
-      document.getElementById("backupBtn").addEventListener("click", downloadBackup);
-      document.getElementById("restoreBtn").addEventListener("click", () => document.getElementById("restoreFile").click());
-      document.getElementById("restoreFile").addEventListener("change", handleRestoreFile);
       document.getElementById("addDayBtn").addEventListener("click", addEntry);
     }
 
@@ -2019,6 +1973,7 @@
     loadCloudData()
       .then((remoteData) => {
         if (applyCloudData(remoteData)) render();
+        else queueCloudSave();
       })
       .catch((error) => {
         console.warn("Usando dados locais enquanto a base online não responde.", error);
