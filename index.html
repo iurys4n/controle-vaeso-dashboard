@@ -1017,7 +1017,6 @@
     <aside class="sidebar glass">
       <div class="brand">
         <p class="eyebrow">Iury / VAESO</p>
-        <button class="current-month-btn" id="currentMonthBtn" type="button">Mês atual</button>
       </div>
       <nav class="nav" id="monthNav" aria-label="Meses"></nav>
       <div class="sidebar-metric">
@@ -1410,7 +1409,6 @@
         select.appendChild(option);
       });
       select.addEventListener("change", (event) => selectMonth(Number(event.target.value)));
-      document.getElementById("currentMonthBtn").addEventListener("click", () => selectMonth(getCurrentMonthIndex()));
       document.getElementById("activitySearch").addEventListener("input", renderSearchResults);
       document.getElementById("pendingToggle").addEventListener("click", () => {
         showOnlyPending = !showOnlyPending;
