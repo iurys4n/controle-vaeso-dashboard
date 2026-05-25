@@ -1555,6 +1555,7 @@
       } else if (field === "day") {
         entry.day = dateValueToDay(input.value);
         entry.dayNumber = Number(entry.day) || null;
+        sortEntriesByDay(month);
       } else {
         entry[field] = input.value;
       }
@@ -1586,17 +1587,27 @@
       render();
     }
 
+    function sortEntriesByDay(month) {
+      month.entries.sort((a, b) => {
+        const dayA = Number(a.dayNumber) || Infinity;
+        const dayB = Number(b.dayNumber) || Infinity;
+        return dayA - dayB;
+      });
+    }
+
     function addEntry() {
       const month = months[selectedIndex];
       const monthNumber = MONTH_NUMBERS[month.name] || 1;
       const totalDays = new Date(YEAR, monthNumber, 0).getDate();
       const maxDay = month.entries.reduce((max, entry) => Math.max(max, Number(entry.dayNumber) || 0), 0);
       const nextDay = month.entries.length ? Math.min(maxDay + 1, totalDays) : 1;
-      month.entries.push({ day: String(nextDay), dayNumber: nextDay, hours: 0, task: "", tags: [] });
+      const newEntry = { day: String(nextDay), dayNumber: nextDay, hours: 0, task: "", tags: [] };
+      month.entries.push(newEntry);
+      sortEntriesByDay(month);
       recalculateAll();
       saveData();
       render();
-      const newIndex = month.entries.length - 1;
+      const newIndex = month.entries.indexOf(newEntry);
       window.requestAnimationFrame(() => {
         const input = document.querySelector(`.tag-input[data-index="${newIndex}"]`);
         if (!input) return;
