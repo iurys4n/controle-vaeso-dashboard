@@ -2484,14 +2484,19 @@
 </html>`;
     }
 
+    function isNonWorkTag(tag) {
+      return /^(sem atividade|feriad|feria|folga)/.test(normTag(tag));
+    }
+
     function getTopActivities(month) {
       const totals = new Map();
       month.entries.forEach((entry) => {
         normalizeEntryTags(entry);
-        const tags = entry.tags.length ? entry.tags : ["Sem atividade"];
+        const tags = entry.tags.filter((tag) => !isNonWorkTag(tag));
+        if (!tags.length) return;
         const share = Number(entry.hours || 0) / tags.length;
         tags.forEach((tag) => {
-          totals.set(tag, Number(((totals.get(tag) || 0) + share).toFixed(2)));
+          totals.set(tag, (totals.get(tag) || 0) + share);
         });
       });
       return Array.from(totals, ([tag, hours]) => ({ tag, hours }))
