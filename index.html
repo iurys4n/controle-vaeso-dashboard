@@ -2495,9 +2495,10 @@
         });
       });
       return Array.from(totals, ([tag, hours]) => ({ tag, hours }))
-        .filter((item) => item.hours > 0)
+        .filter((item) => item.hours > 0.01)
         .sort((a, b) => b.hours - a.hours)
-        .slice(0, 2);
+        .slice(0, 2)
+        .map((item) => ({ tag: item.tag, hours: Math.round(item.hours * 2) / 2 }));
     }
 
     function handleTagRemove(event) {
